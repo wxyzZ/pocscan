@@ -9,6 +9,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 
@@ -30,6 +31,12 @@ import org.jsoup.Jsoup;
 
 import bean.ExpResult;
 import bean.ExpResult2;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Headers;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
 
 /**
  * @author wxy
@@ -53,7 +60,7 @@ public class HttpRequestHandler {
 		this.ua = ua;
 	}
 
-	public ExpResult doRequest(String url, Method method, Map<String, String> headers, String... data) {
+	public ExpResult doRequest1(String url, Method method, Map<String, String> headers, String... data) {
 		Connection conn = Jsoup.connect(url).validateTLSCertificates(false).ignoreContentType(true);
 		conn.method(method);
 		conn.userAgent(ua);
@@ -73,6 +80,14 @@ public class HttpRequestHandler {
 			return new ExpResult();
 		}
 		return new ExpResult(b.headers(), b.bodyAsBytes(), b.statusCode());
+	}
+
+	public static ExpResult doRequest(String url, Method method, Map<String, String> headers, String... data) {
+		OkHttpClient mOkHttpClient = new OkHttpClient.Builder().connectTimeout(30, TimeUnit.SECONDS).build();
+		Request request = new Request.Builder().url(url).build();
+		HttpRequestHandler.OkHttpTest okHttpTest = new HttpRequestHandler("test").new OkHttpTest();
+		mOkHttpClient.newCall(request).enqueue(okHttpTest);
+		return okHttpTest.getResult();
 	}
 
 	private ExpResult2 doRequest2(String url, Method method, AbstractHttpEntity entity) {
@@ -144,4 +159,38 @@ public class HttpRequestHandler {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * 
+	 * @author wxy
+	 *
+	 */
+
+	private class OkHttpTest implements Callback {
+		private ExpResult result;
+
+		public OkHttpTest() {
+		}
+
+		@Override
+		public void onFailure(Call call, IOException e) {
+			e.printStackTrace();
+		}
+
+		@Override
+		public void onResponse(Call call, okhttp3.Response response) throws IOException {
+
+			try (ResponseBody responseBody = response.body()) {
+				if (!response.isSuccessful())
+					throw new IOException("Unexpected code " + response);
+				this.result = new ExpResult(null, responseBody.bytes(), response.code());
+			}
+		}
+
+		public ExpResult getResult() {
+			return result;
+		}
+
+	}
+
 }

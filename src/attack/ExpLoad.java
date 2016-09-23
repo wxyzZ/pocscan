@@ -15,11 +15,12 @@ import groovy.util.ScriptException;
  * @author wxy
  *
  */
-public class ExpLoad implements Runnable {
+public class ExpLoad  {
 	private String pluginName;
 	private String host;
 	private int port;
 	
+	public ExpLoad(){}
 	
 	public ExpLoad(String pluginName, String host, int port) {
 		super();
@@ -28,11 +29,8 @@ public class ExpLoad implements Runnable {
 		this.port = port;
 	}
 
-	public void run() {
-		plugInLoad(pluginName, host, port);
-	}
 
-	private void plugInLoad(String pluginName, String host, int port) {
+	public void plugInLoad(String pluginName, String host, int port) {
 		String path = String.valueOf(System.getProperty("user.dir")) + File.separator + "plugIn" + File.separator
 				+ "Exploit" + File.separator;
 		GroovyScriptEngine engine = null;

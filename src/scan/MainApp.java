@@ -32,29 +32,21 @@ public class MainApp {
 		if (ip.contains("-")) {
 			startip = ip.split("-")[0];
 			endip = ip.split("-")[1];
-		} else if(ip.contains("/")) {
+		} else if (ip.contains("/")) {
 			SubnetUtils utils = new SubnetUtils(ip);
 			startip = utils.getInfo().getLowAddress();
 			endip = utils.getInfo().getHighAddress();
-		}else
-		{
-			startip=ip;
-			endip=ip;
+		} else {
+			startip = ip;
+			endip = ip;
 		}
-		ExecutorService fixedThreadPool = Executors.newFixedThreadPool(50);
 		long start = Ip2Tools.ipToLong(startip);
-		long end=Ip2Tools.ipToLong(endip);
+		long end = Ip2Tools.ipToLong(endip);
 		System.out.println(new Date());
-		for (long i = 0L; i<=end-start; i++) {
-			try {
-				Thread.sleep(20);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			fixedThreadPool.execute(new ExpLoad(pluginName, Ip2Tools.longToIP(start+i), 80));
-			System.out.println(Runtime.getRuntime().availableProcessors());
-		}
+//		for (int i = 0; i <= end - start; i++) {
+			new ExpLoad().plugInLoad(pluginName, "www.baidu.com", port);
+//		}
+		System.out.println(Runtime.getRuntime().availableProcessors());
 		System.out.println(new Date());
-		fixedThreadPool.shutdown();
 	}
 }
