@@ -25,9 +25,15 @@ public class MainApp {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		new MainApp().start("test", "220.181.0.0/16", 80);
+		new MainApp().start("test", "127.0.0.1/24", 80);
 	}
 
+	/**
+	 * 扫描一个b段用时大约25分钟，使用内存150m左右，线程150
+	 * @param pluginName
+	 * @param ip
+	 * @param port
+	 */
 	public void start(String pluginName, String ip, int port) {
 		String startip;
 		String endip;
@@ -36,6 +42,7 @@ public class MainApp {
 			endip = ip.split("-")[1];
 		} else if (ip.contains("/")) {
 			SubnetUtils utils = new SubnetUtils(ip);
+			utils.setInclusiveHostCount(true);
 			startip = utils.getInfo().getLowAddress();
 			endip = utils.getInfo().getHighAddress();
 		} else {
