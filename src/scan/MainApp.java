@@ -3,13 +3,16 @@
  */
 package scan;
 
-import java.util.Date;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.net.util.SubnetUtils;
 
 import attack.ExpLoad;
+import groovy.lang.GroovyObject;
+import groovy.util.GroovyScriptEngine;
 import util.Ip2Tools;
 
 /**
@@ -22,8 +25,7 @@ public class MainApp {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		new MainApp().start("test", "127.0.0.0/16", 80);
-		System.out.println();
+		new MainApp().start("test", "220.181.0.0/16", 80);
 	}
 
 	public void start(String pluginName, String ip, int port) {
@@ -40,13 +42,50 @@ public class MainApp {
 			startip = ip;
 			endip = ip;
 		}
+//		BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(100);
+//		ExecutorService threadPool = new ThreadPoolExecutor(100, 120, 3, TimeUnit.SECONDS, queue,
+//				new ThreadPoolExecutor.CallerRunsPolicy());
+		ExecutorService threadPool = Executors.newCachedThreadPool(); 
+		
+		
+		
 		long start = Ip2Tools.ipToLong(startip);
 		long end = Ip2Tools.ipToLong(endip);
-		System.out.println(new Date());
-//		for (int i = 0; i <= end - start; i++) {
-			new ExpLoad().plugInLoad(pluginName, "www.baidu.com", port);
-//		}
-		System.out.println(Runtime.getRuntime().availableProcessors());
-		System.out.println(new Date());
+		GroovyObject groovyObject = getGroovyObject(pluginName);
+		for (long i = 0L; i <= end - start; i++) {
+			try {
+				Thread.sleep(20);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			Runnable exp = new ExpLoad(groovyObject, Ip2Tools.longToIP(start + i), 80);
+			threadPool.execute(exp);
+//			if (queue.size() == 100) {
+//				try {
+//					queue.put(exp);
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
+//			}
+		}
+		threadPool.shutdown();
+	}
+
+	private GroovyObject getGroovyObject(String pluginName) {
+		String path = String.valueOf(System.getProperty("user.dir")) + File.separator + "plugIn" + File.separator
+				+ "Exploit" + File.separator;
+		GroovyScriptEngine engine = null;
+		try {
+			engine = new GroovyScriptEngine(path);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			return (GroovyObject) engine.loadScriptByName(pluginName + ".groovy").newInstance();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 }
